@@ -1,0 +1,47 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Checkout') {
+            steps {
+                // Checkout code from version control
+                checkout scm
+            }
+        }
+
+        stage('Build') {
+            steps {
+                // Example build step
+                echo 'Building the project...'
+            }
+        }
+
+        stage('Test') {
+            steps {
+                // Example test step
+                echo 'Running tests...'
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                // Example deploy step
+                echo 'Deploying the application...'
+            }
+        }
+    }
+    post {
+        always {
+            // Actions that run after every build, e.g., cleanup
+            echo 'Cleaning up...'
+        }
+        success {
+            // Actions that run on successful build
+            echo 'Build succeeded!'
+        }
+        failure {
+            // Actions that run on failed build
+            echo 'Build failed!'
+        }
+    }
+}
