@@ -1,47 +1,56 @@
 pipeline {
     agent any
-
+    
+    environment {
+        LABS = credentials('deploy-cred')
+        JAVA_HOME = '/opt/bitnami/java'  // Set your JAVA_HOME path here.
+        PATH = "${env.JAVA_HOME}/bin:${env.PATH}"  // Add Java binaries to PATH
+    }
+    
     stages {
-        stage('Checkout') {
+        stage('Setup Virtual Environment') {
             steps {
-                // Checkout code from version control
-                checkout scm
+                script {
+                    // Create a virtual environment with the project name (Retail pipeline)
+                    sh 'python3 -m venv python_examples_pipeline_venv'
+                    // Upgrade pip and install pipenv in the virtual environment
+                    sh './python_examples_pipeline_venv/bin/pip install --upgrade pip'
+                    sh './python_examples_pipeline_venv/bin/pip install pipenv'
+                }
             }
         }
-
-        stage('Build') {
+        stage('Install Dependencies') {
             steps {
-                // Example build step
-                echo 'Building the project...'
+                script {
+                    // Install your project dependencies (e.g., requirements.txt or Pipfile)
+                    sh './python_examples_pipeline_venv/bin/pipenv install'
+                }
             }
         }
-
         stage('Test') {
             steps {
-                // Example test step
-                echo 'Running tests...'
+                script {
+                    // Ensure JAVA_HOME is set for PySpark to work
+                    sh 'echo $JAVA_HOME'
+                    sh 'echo $PATH'
+                    
+                    // Run tests (assuming you are using pytest for tests)
+                    // Example test step
+                    echo 'Running tests...'
+                }
             }
         }
-
+        stage('Package') {
+            steps {
+                // Create the zip file but exclude the venv directory
+                sh 'zip -r python-examples.zip . -x "python_examples_pipeline_venv/*"'
+            }
+        }
         stage('Deploy') {
             steps {
-                // Example deploy step
-                echo 'Deploying the application...'
+                // Add deployment steps here (e.g., deploy to a server or cloud)
+                sh 'sshpass -p test22ciCD scp -o StrictHostKeyChecking=no -r python-examples.zip /home/cicd/deployments/python-examples'
             }
-        }
-    }
-    post {
-        always {
-            // Actions that run after every build, e.g., cleanup
-            echo 'Cleaning up...'
-        }
-        success {
-            // Actions that run on successful build
-            echo 'Build succeeded!'
-        }
-        failure {
-            // Actions that run on failed build
-            echo 'Build failed!'
         }
     }
 }
